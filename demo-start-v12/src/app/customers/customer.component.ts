@@ -1,9 +1,24 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {FormGroup, FormBuilder, Validators, AbstractControl, ValidatorFn} from '@angular/forms'
-import { Customer } from './customer';
+import {Customer} from './customer';
+
+import {debounceTime} from "rxjs/operators";
 
 
+function emailMatcher(c: AbstractControl): { [key: string]: boolean } | null {
+  const emailControl = c.get('email');
+  const confirmControl = c.get('confirmEmail');
 
+  if (emailControl.pristine || confirmControl.pristine) {
+    return null;
+  }
+
+  if (emailControl.value === confirmControl.value) {
+    return null;
+  }
+
+  return {'match': true};
+}
 
 
 function ratingRange(min: number, max: number): ValidatorFn {
@@ -23,6 +38,13 @@ function ratingRange(min: number, max: number): ValidatorFn {
 export class CustomerComponent implements OnInit {
   customerForm: FormGroup;
   customer = new Customer();
+  emailMessage: any;
+
+  private validationMessages: any = {
+    required: 'Please enter your email address.',
+    email: 'Please enter a valid email address.'
+  };
+
   constructor(private fb: FormBuilder) {
 
   }
@@ -34,11 +56,24 @@ export class CustomerComponent implements OnInit {
       emailGroup: this.fb.group({
         email: ['', Validators.compose([Validators.required, Validators.email])],
         confirmEmail: ['', Validators.required]
-      }),
+      }, {validator: emailMatcher}),
       phone: '',
       notification: 'email',
       rating: [null, ratingRange(1, 5)],
       sendCatalog: true,
+    })
+
+    this.customerForm.get('notification').valueChanges.subscribe({
+        next: value => this.setNotification(value),
+        error: value => console.log(value)
+      }
+    )
+    const emailControl = this.customerForm.get('emailGroup.email');
+    emailControl.valueChanges.pipe(
+      debounceTime(1000)
+    ).subscribe({
+      next: value => this.setMessage(emailControl),
+      error: value => console.log(value)
     })
   }
 
@@ -49,14 +84,24 @@ export class CustomerComponent implements OnInit {
       sendCatalog: false
     })
   }
+
   save(): void {
     console.log(this.customerForm);
     console.log('Saved: ' + JSON.stringify(this.customerForm!.value));
   }
 
+  setMessage(c: AbstractControl): void {
+    this.emailMessage = '';
+    if ((c.touched || c.dirty) && c.errors) {
+      console.log(c);
+      this.emailMessage = Object.keys(c.errors).map(
+        key => this.validationMessages[key]).join(' ')
+    }
+  }
+
   setNotification(notifyVia: string): void {
     const phoneControl = this.customerForm.get('phone');
-    if(notifyVia === 'text') {
+    if (notifyVia === 'text') {
       phoneControl.setValidators(Validators.required)
     } else {
       phoneControl.clearValidators();
