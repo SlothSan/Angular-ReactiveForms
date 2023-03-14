@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-import { FormGroup, FormBuilder, Validators, AbstractControl, ValidatorFn, FormArray } from '@angular/forms';
+import {Component, OnInit} from '@angular/core';
+import {FormGroup, FormBuilder, Validators, AbstractControl, ValidatorFn, FormArray} from '@angular/forms';
 
-import { debounceTime } from 'rxjs/operators';
+import {debounceTime} from 'rxjs/operators';
 
-import { Customer } from './customer';
+import {Customer} from './customer';
 
 function emailMatcher(c: AbstractControl): { [key: string]: boolean } | null {
   const emailControl = c.get('email');
@@ -16,13 +16,13 @@ function emailMatcher(c: AbstractControl): { [key: string]: boolean } | null {
   if (emailControl?.value === confirmControl?.value) {
     return null;
   }
-  return { match: true };
+  return {match: true};
 }
 
 function ratingRange(min: number, max: number): ValidatorFn {
   return (c: AbstractControl): { [key: string]: boolean } | null => {
     if (c.value !== null && (isNaN(c.value) || c.value < min || c.value > max)) {
-      return { range: true };
+      return {range: true};
     }
     return null;
   };
@@ -47,7 +47,8 @@ export class CustomerComponent implements OnInit {
     email: 'Please enter a valid email address.'
   };
 
-  constructor(private fb: FormBuilder) { }
+  constructor(private fb: FormBuilder) {
+  }
 
   ngOnInit(): void {
     this.customerForm = this.fb.group({
@@ -56,7 +57,7 @@ export class CustomerComponent implements OnInit {
       emailGroup: this.fb.group({
         email: ['', [Validators.required, Validators.email]],
         confirmEmail: ['', Validators.required],
-      }, { validators: emailMatcher }),
+      }, {validators: emailMatcher}),
       phone: '',
       notification: 'email',
       rating: [null, ratingRange(1, 5)],
@@ -95,7 +96,7 @@ export class CustomerComponent implements OnInit {
     this.customerForm.patchValue({
       firstName: 'Jack',
       lastName: 'Harkness',
-      emailGroup: { email: 'jack@torchwood.com', confirmEmail: 'jack@torchwood.com' }
+      emailGroup: {email: 'jack@torchwood.com', confirmEmail: 'jack@torchwood.com'}
     });
     const addressGroup = this.fb.group({
       addressType: 'work',
